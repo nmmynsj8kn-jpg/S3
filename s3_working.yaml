@@ -1,7 +1,14 @@
-AWSTemplateFormatVersion: 2019-09-09
-Resorces:
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Static website S3 bucket with public read access (for demo/testing)
+# Description of what this change includes
+# Revision 2
+# 10/26/2025
+
+Resources:
   S3Bucket:
-    Type: 'AWS:S3:Bucket'
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
@@ -11,36 +18,29 @@ Resorces:
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-BucketPolicy:
-    #Type: 'AWS::S3::BucketPolicy'
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
+      Bucket: !Ref S3Bucket
       PolicyDocument:
+        Version: "2012-10-17"
         Id: MyPolicy
-        Version: 2012-10-17
         Statement:
           - Sid: PublicReadForGetBucketObjects
             Effect: Allow
-            Principal: '*'
-            Action: 's3:GetObject'
-            Resource: !Join 
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref S3Bucket
-                - /*
-      Bucket: !Ref S3Bucket
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+
 Outputs:
   WebsiteURL:
-    Value: !GetAtt 
-      - S3Bucket
-      - WebsiteURL
-    Description: URL for website hosted on S3
+    Description: URL for website hosted on S3 (HTTP, website endpoint)
+    Value: !GetAtt S3Bucket.WebsiteURL
+
   S3BucketSecureURL:
-    Value: !Join 
-      - ''
-      - - 'https://'
-        - !GetAtt 
-          - S3Bucket
-          - DomainName
-    Description: Name of S3 bucket to hold website content
+    Description: HTTPS virtual-hosted–style endpoint (not the website endpoint)
+    Value: !Join
+      - ""
+      - - "https://"
+        - !GetAtt S3Bucket.DomainName
